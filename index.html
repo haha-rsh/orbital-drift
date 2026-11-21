@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ORBITAL DRIFT // Neon Arcade Roguelike</title>
   <style>
     :root {
@@ -25,6 +25,7 @@
       padding: 0;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
@@ -34,6 +35,9 @@
       background-color: var(--bg-dark);
       color: var(--white);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      overscroll-behavior: none;
     }
 
     #canvas-container {
@@ -541,11 +545,266 @@
       margin-top: 4px;
     }
 
+    /* Mobile Touch Controls */
+    #mobile-controls {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 25;
+      display: none;
+    }
+
+    body.is-touch #mobile-controls {
+      display: block;
+    }
+
+    #joystick-zone {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    #joystick-base {
+      position: absolute;
+      left: 30px;
+      bottom: 30px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.05) 0%, rgba(6, 14, 28, 0.65) 60%, rgba(0, 240, 255, 0.25) 100%);
+      border: 2px solid rgba(0, 240, 255, 0.4);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      opacity: 0.8;
+      will-change: left, bottom;
+    }
+
+    #joystick-base::after {
+      content: '';
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      border-radius: 50%;
+      border: 1px dashed rgba(0, 240, 255, 0.35);
+    }
+
+    #joystick-knob {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff 0%, var(--cyan) 60%, rgba(0, 180, 220, 0.9) 100%);
+      box-shadow: 0 0 16px var(--cyan), 0 0 25px var(--cyan-glow);
+      border: 2px solid #ffffff;
+      pointer-events: none;
+      transform: translate(0px, 0px);
+      will-change: transform;
+    }
+
+    .touch-action-btn {
+      position: absolute;
+      bottom: 40px;
+      right: 32px;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 170, 0, 0.25) 0%, rgba(18, 22, 35, 0.88) 100%);
+      border: 2px solid var(--amber);
+      box-shadow: 0 0 20px var(--amber-glow), inset 0 0 12px rgba(255, 170, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      z-index: 26;
+      overflow: hidden;
+      transition: transform 0.1s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+    }
+
+    .touch-action-btn:active {
+      transform: scale(0.92);
+      box-shadow: 0 0 30px var(--amber);
+    }
+
+    .touch-action-btn.on-cooldown {
+      opacity: 0.55;
+      border-color: #667;
+      box-shadow: none;
+    }
+
+    .dash-btn-text {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #ffffff;
+      text-shadow: 0 0 10px var(--amber-glow);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    #touch-dash-cooldown {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0%;
+      background: rgba(255, 170, 0, 0.35);
+      transition: height 0.1s linear;
+      pointer-events: none;
+    }
+
+    .card-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
-      .hud-bar-outer { width: 140px; }
-      .cards-grid { flex-direction: column; align-items: center; }
-      .upgrade-card { width: 90%; max-width: 320px; }
+      #hud {
+        padding: 12px 14px;
+      }
+      .hud-stats-group {
+        gap: 6px;
+      }
+      .hud-bar-container {
+        gap: 6px;
+        font-size: 11px;
+      }
+      .hud-bar-label {
+        width: 44px;
+      }
+      .hud-bar-outer {
+        width: 100px;
+        height: 10px;
+      }
+      .hud-wave-tag {
+        font-size: 10px;
+        letter-spacing: 1px;
+      }
+      .hud-wave-num {
+        font-size: 24px;
+      }
+      .hud-score-label {
+        font-size: 10px;
+        letter-spacing: 1px;
+      }
+      .hud-score-val {
+        font-size: 18px;
+      }
+      .hud-combo-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+      }
+      .hud-controls-hint {
+        display: none;
+      }
+      .hud-buttons {
+        gap: 6px;
+      }
+      .neon-icon-btn {
+        font-size: 11px;
+        padding: 6px 10px;
+      }
+
+      /* Modal screens on mobile */
+      .modal-screen {
+        padding: 16px;
+      }
+      .title-glitch {
+        font-size: clamp(30px, 8vw, 48px);
+        letter-spacing: 5px;
+      }
+      .subtitle-neon {
+        font-size: 12px;
+        letter-spacing: 3px;
+        margin-bottom: 18px;
+      }
+      .menu-card {
+        padding: 18px 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 18px;
+      }
+      .controls-grid {
+        font-size: 11px;
+        gap: 8px;
+      }
+      .cta-btn {
+        font-size: 15px;
+        letter-spacing: 3px;
+        padding: 14px 32px;
+        width: 100%;
+        max-width: 320px;
+      }
+
+      /* Upgrade screen mobile optimization */
+      #upgrade-screen {
+        padding: 16px 12px;
+        justify-content: flex-start;
+        overflow-y: auto;
+      }
+      .upgrade-header {
+        font-size: 20px;
+        letter-spacing: 3px;
+        margin-top: 10px;
+      }
+      .upgrade-sub {
+        font-size: 11px;
+        letter-spacing: 2px;
+        margin-bottom: 16px;
+      }
+      .cards-grid {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        padding-bottom: 20px;
+        width: 100%;
+      }
+      .upgrade-card {
+        width: 100%;
+        max-width: 360px;
+        padding: 12px 16px;
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+        gap: 14px;
+      }
+      .upgrade-card:hover {
+        transform: scale(1.02);
+      }
+      .card-info {
+        align-items: flex-start;
+      }
+      .card-icon {
+        font-size: 30px;
+        margin-bottom: 0;
+        flex-shrink: 0;
+      }
+      .card-title {
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .card-desc {
+        font-size: 11.5px;
+        margin-bottom: 8px;
+        line-height: 1.35;
+      }
+      .card-rarity {
+        font-size: 10px;
+        padding: 2px 8px;
+      }
     }
   </style>
 </head>
@@ -557,6 +816,19 @@
   </div>
 
   <div class="crt-overlay"></div>
+
+  <!-- Mobile On-Screen Controls -->
+  <div id="mobile-controls">
+    <div id="joystick-zone">
+      <div id="joystick-base">
+        <div id="joystick-knob"></div>
+      </div>
+    </div>
+    <div id="touch-dash-btn" class="touch-action-btn" aria-label="Phase Dash">
+      <div id="touch-dash-cooldown"></div>
+      <span class="dash-btn-text">DASH</span>
+    </div>
+  </div>
 
   <!-- In-Game HUD -->
   <div id="hud">
@@ -596,10 +868,11 @@
 
     <div class="hud-bottom">
       <div class="hud-controls-hint">
-        WASD / ARROWS : DRIFT &bull; MOUSE : AIM &bull; CLICK : FIRE<br>
-        SPACE / R-CLICK : PHASE DASH &bull; P / ESC : PAUSE
+        DESKTOP: WASD DRIFT &bull; MOUSE AIM &bull; CLICK FIRE &bull; SPACE DASH<br>
+        MOBILE: LEFT THUMBSTICK DRIFT &bull; AUTO / TOUCH AIM &bull; DASH BTN
       </div>
       <div class="hud-buttons">
+        <button id="pause-btn" class="neon-icon-btn">PAUSE</button>
         <button id="autofire-btn" class="neon-icon-btn">AUTOFIRE: ON</button>
         <button id="mute-btn" class="neon-icon-btn">AUDIO: ON</button>
       </div>
@@ -633,14 +906,14 @@
         Absorb quantum energy, upgrade your ship's mainframe, and survive the onslaught.
       </p>
       <div class="controls-grid">
-        <div><span class="ctrl-key">WASD / ARROWS</span></div>
+        <div><span class="ctrl-key">WASD / JOYSTICK</span></div>
         <div class="ctrl-desc">Inertia Thrusters</div>
-        <div><span class="ctrl-key">MOUSE</span></div>
-        <div class="ctrl-desc">Targeting Reticle</div>
-        <div><span class="ctrl-key">L-CLICK / AUTO</span></div>
+        <div><span class="ctrl-key">MOUSE / AUTO-AIM</span></div>
+        <div class="ctrl-desc">Lock-on Reticle</div>
+        <div><span class="ctrl-key">AUTOFIRE / CLICK</span></div>
         <div class="ctrl-desc">Pulse Cannons</div>
-        <div><span class="ctrl-key">SPACE / R-CLICK</span></div>
-        <div class="ctrl-desc">Invulnerable Dash</div>
+        <div><span class="ctrl-key">SPACE / DASH BTN</span></div>
+        <div class="ctrl-desc">Phase Dash (i-frames)</div>
       </div>
     </div>
 
@@ -1249,8 +1522,33 @@
     }
 
     update(dt, input, bounds, game) {
-      // Rotation towards mouse cursor
-      this.rotation = Math.atan2(input.mouseY - this.y, input.mouseX - this.x);
+      // Rotation and Aiming logic
+      if (input.isTouchDevice && !input.touchAiming) {
+        // Smart Auto-Targeting on mobile when not actively manual-aiming
+        let closestEnemy = null;
+        let minDist = Infinity;
+        for (let i = 0; i < game.enemies.length; i++) {
+          const e = game.enemies[i];
+          if (e.dead) continue;
+          const dist = Math.hypot(e.x - this.x, e.y - this.y);
+          if (dist < minDist) {
+            minDist = dist;
+            closestEnemy = e;
+          }
+        }
+        if (closestEnemy) {
+          this.rotation = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+          input.mouseX = closestEnemy.x;
+          input.mouseY = closestEnemy.y;
+        } else if (input.touchMoveX || input.touchMoveY) {
+          this.rotation = Math.atan2(input.touchMoveY, input.touchMoveX);
+          input.mouseX = this.x + Math.cos(this.rotation) * 80;
+          input.mouseY = this.y + Math.sin(this.rotation) * 80;
+        }
+      } else {
+        // Desktop mouse or active touch aim
+        this.rotation = Math.atan2(input.mouseY - this.y, input.mouseX - this.x);
+      }
 
       // Inertial movement input
       let moveX = 0;
@@ -1260,13 +1558,20 @@
       if (input.keys['KeyA'] || input.keys['ArrowLeft']) moveX -= 1;
       if (input.keys['KeyD'] || input.keys['ArrowRight']) moveX += 1;
 
-      // Normalize diagonal
+      // Analog joystick input from touch
+      if (input.touchMoveX || input.touchMoveY) {
+        moveX += input.touchMoveX;
+        moveY += input.touchMoveY;
+      }
+
+      // Normalize diagonal / analog
       const inputLen = Math.hypot(moveX, moveY);
       if (inputLen > 0) {
-        moveX /= inputLen;
-        moveY /= inputLen;
-        this.vx += moveX * this.accel;
-        this.vy += moveY * this.accel;
+        const normLen = Math.min(1, inputLen);
+        const dirX = moveX / inputLen;
+        const dirY = moveY / inputLen;
+        this.vx += dirX * this.accel * normLen;
+        this.vy += dirY * this.accel * normLen;
 
         // Thrust flame particles
         this.thrustParticleTimer += dt;
@@ -2017,7 +2322,11 @@
         mouseX: window.innerWidth / 2 || 600,
         mouseY: window.innerHeight / 2 || 400,
         mouseDown: false,
-        autoFire: true
+        autoFire: true,
+        isTouchDevice: false,
+        touchMoveX: 0,
+        touchMoveY: 0,
+        touchAiming: false
       };
 
       // Entities
@@ -2066,6 +2375,11 @@
 
       this.autofireBtn = document.getElementById('autofire-btn');
       this.muteBtn = document.getElementById('mute-btn');
+      this.pauseBtn = document.getElementById('pause-btn');
+
+      this.mobileControls = document.getElementById('mobile-controls');
+      this.touchDashBtn = document.getElementById('touch-dash-btn');
+      this.touchDashCooldown = document.getElementById('touch-dash-cooldown');
 
       // Update initial highscore tag
       document.getElementById('start-highscore').innerText =
@@ -2074,6 +2388,148 @@
 
     initEvents() {
       window.addEventListener('resize', () => this.resize());
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => this.resize(), 150);
+      });
+
+      // Touch Device Detection
+      const enableTouchMode = () => {
+        if (!this.input.isTouchDevice) {
+          this.input.isTouchDevice = true;
+          document.body.classList.add('is-touch');
+          if (this.mobileControls && this.state === 'PLAYING') {
+            this.mobileControls.style.display = 'block';
+          }
+        }
+      };
+
+      if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        enableTouchMode();
+      }
+
+      window.addEventListener('touchstart', () => {
+        enableTouchMode();
+        this.soundEngine.ensureContext();
+      }, { passive: true });
+
+      // Virtual Joystick and Touch Aiming state
+      let joystickTouchId = null;
+      let aimTouchId = null;
+      const joystickBase = document.getElementById('joystick-base');
+      const joystickKnob = document.getElementById('joystick-knob');
+      let joyCenterX = 0;
+      let joyCenterY = 0;
+      const maxJoyDist = 45;
+
+      const resetJoystick = () => {
+        joystickTouchId = null;
+        this.input.touchMoveX = 0;
+        this.input.touchMoveY = 0;
+        if (joystickKnob) joystickKnob.style.transform = 'translate(0px, 0px)';
+        if (joystickBase) {
+          joystickBase.style.left = '30px';
+          joystickBase.style.bottom = '30px';
+        }
+      };
+
+      // Multi-Touch Game Event Handlers
+      window.addEventListener('touchstart', (e) => {
+        enableTouchMode();
+        this.soundEngine.ensureContext();
+        if (this.state !== 'PLAYING') return;
+
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          const x = t.clientX;
+          const y = t.clientY;
+
+          // Ignore touches on HUD buttons, Dash button, or Modal screens
+          const target = document.elementFromPoint(x, y);
+          if (target && (target.closest('.hud-buttons') || target.closest('#touch-dash-btn') || target.closest('.modal-screen:not(.hidden)'))) {
+            continue;
+          }
+
+          // Left zone (Steering Joystick)
+          if (x < window.innerWidth * 0.52 && joystickTouchId === null) {
+            e.preventDefault();
+            joystickTouchId = t.identifier;
+            const baseRadius = 65;
+            const clampedX = Math.max(baseRadius + 10, Math.min(window.innerWidth * 0.5 - baseRadius, x));
+            const clampedY = Math.max(baseRadius + 10, Math.min(window.innerHeight - baseRadius - 10, y));
+
+            joyCenterX = clampedX;
+            joyCenterY = clampedY;
+
+            joystickBase.style.left = `${clampedX - baseRadius}px`;
+            joystickBase.style.bottom = `${window.innerHeight - clampedY - baseRadius}px`;
+            joystickKnob.style.transform = 'translate(0px, 0px)';
+            this.input.touchMoveX = 0;
+            this.input.touchMoveY = 0;
+          }
+          // Right zone (Touch Aiming)
+          else if (x >= window.innerWidth * 0.52 && aimTouchId === null) {
+            aimTouchId = t.identifier;
+            this.input.touchAiming = true;
+            this.input.mouseX = x;
+            this.input.mouseY = y;
+          }
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchmove', (e) => {
+        if (this.state !== 'PLAYING') return;
+
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+
+          if (t.identifier === joystickTouchId) {
+            e.preventDefault();
+            const dx = t.clientX - joyCenterX;
+            const dy = t.clientY - joyCenterY;
+            const dist = Math.hypot(dx, dy);
+            const clampedDist = Math.min(dist, maxJoyDist);
+            const angle = Math.atan2(dy, dx);
+
+            const knobX = Math.cos(angle) * clampedDist;
+            const knobY = Math.sin(angle) * clampedDist;
+
+            joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+            this.input.touchMoveX = knobX / maxJoyDist;
+            this.input.touchMoveY = knobY / maxJoyDist;
+          } else if (t.identifier === aimTouchId) {
+            this.input.touchAiming = true;
+            this.input.mouseX = t.clientX;
+            this.input.mouseY = t.clientY;
+          }
+        }
+      }, { passive: false });
+
+      const onTouchEnd = (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === joystickTouchId) {
+            resetJoystick();
+          } else if (t.identifier === aimTouchId) {
+            aimTouchId = null;
+            this.input.touchAiming = false;
+          }
+        }
+      };
+
+      window.addEventListener('touchend', onTouchEnd, { passive: true });
+      window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+      // Dash Button listener
+      if (this.touchDashBtn) {
+        this.touchDashBtn.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.soundEngine.ensureContext();
+          if (this.state === 'PLAYING' && this.player) {
+            this.player.dash(this.soundEngine, this);
+          }
+        }, { passive: false });
+      }
 
       // Key listeners
       window.addEventListener('keydown', (e) => {
@@ -2133,6 +2589,7 @@
         this.pauseScreen.classList.add('hidden');
         this.startScreen.classList.remove('hidden');
         this.hud.classList.remove('visible');
+        if (this.mobileControls) this.mobileControls.style.display = 'none';
         this.state = 'MENU';
       });
       document.getElementById('retry-btn').addEventListener('click', () => this.startGame());
@@ -2148,6 +2605,14 @@
         const active = this.soundEngine.toggleMute();
         this.muteBtn.innerText = `AUDIO: ${active ? 'ON' : 'MUTED'}`;
       });
+
+      // Pause button
+      if (this.pauseBtn) {
+        this.pauseBtn.addEventListener('click', () => {
+          if (this.state === 'PLAYING') this.pauseGame();
+          else if (this.state === 'PAUSED') this.resumeGame();
+        });
+      }
     }
 
     resize() {
@@ -2185,6 +2650,9 @@
       this.gameoverScreen.classList.add('hidden');
       this.upgradeScreen.classList.add('hidden');
       this.hud.classList.add('visible');
+      if (this.mobileControls && this.input.isTouchDevice) {
+        this.mobileControls.style.display = 'block';
+      }
 
       this.state = 'PLAYING';
       this.startWave(this.currentWave);
@@ -2193,12 +2661,16 @@
     pauseGame() {
       if (this.state !== 'PLAYING') return;
       this.state = 'PAUSED';
+      if (this.mobileControls) this.mobileControls.style.display = 'none';
       this.pauseScreen.classList.remove('hidden');
     }
 
     resumeGame() {
       if (this.state !== 'PAUSED') return;
       this.pauseScreen.classList.add('hidden');
+      if (this.mobileControls && this.input.isTouchDevice) {
+        this.mobileControls.style.display = 'block';
+      }
       this.state = 'PLAYING';
       this.lastTime = performance.now();
     }
@@ -2206,6 +2678,7 @@
     gameOver() {
       this.state = 'GAMEOVER';
       this.hud.classList.remove('visible');
+      if (this.mobileControls) this.mobileControls.style.display = 'none';
 
       let isNewBest = false;
       if (this.score > this.highScore) {
@@ -2293,6 +2766,7 @@
     showUpgradeDraft() {
       this.state = 'UPGRADE';
       this.soundEngine.playUpgradeChime();
+      if (this.mobileControls) this.mobileControls.style.display = 'none';
       this.cardsContainer.innerHTML = '';
 
       // Randomly choose 3 unique upgrades from the pool
@@ -2304,14 +2778,19 @@
         card.className = `upgrade-card rarity-${upg.rarity}`;
         card.innerHTML = `
           <div class="card-icon">${upg.icon}</div>
-          <div class="card-title">${upg.name}</div>
-          <div class="card-desc">${upg.desc}</div>
-          <div class="card-rarity">${upg.rarity}</div>
+          <div class="card-info">
+            <div class="card-title">${upg.name}</div>
+            <div class="card-desc">${upg.desc}</div>
+            <div class="card-rarity">${upg.rarity}</div>
+          </div>
         `;
         card.addEventListener('click', () => {
           upg.apply(this.player, this);
           this.upgradeScreen.classList.add('hidden');
           this.state = 'PLAYING';
+          if (this.mobileControls && this.input.isTouchDevice) {
+            this.mobileControls.style.display = 'block';
+          }
           this.startWave(this.currentWave + 1);
         });
         this.cardsContainer.appendChild(card);
@@ -2521,6 +3000,18 @@
 
       this.comboBadge.innerText = `${this.combo.toFixed(1)}x MULTIPLIER`;
       this.comboBadge.style.opacity = this.combo > 1 ? '1' : '0.6';
+
+      // Update mobile touch dash button cooldown
+      if (this.touchDashBtn && this.touchDashCooldown) {
+        if (this.player.dashCooldown > 0) {
+          this.touchDashBtn.classList.add('on-cooldown');
+          const remainingPct = Math.max(0, Math.min(100, (this.player.dashCooldown / this.player.dashCooldownTime) * 100));
+          this.touchDashCooldown.style.height = `${remainingPct}%`;
+        } else {
+          this.touchDashBtn.classList.remove('on-cooldown');
+          this.touchDashCooldown.style.height = '0%';
+        }
+      }
     }
 
     render() {
